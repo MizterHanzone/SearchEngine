@@ -17,7 +17,6 @@
 
         body {
             min-height: 100vh;
-            display: flex;
             align-items: center;
             justify-content: center;
             background-image: url("{{ asset('images/bg.jpg') }}"); 
@@ -25,7 +24,34 @@
             background-position: center; 
         }
 
+        .subject {
+            width: 600px;
+            height: 60px;
+            margin-left: 382px;
+            color: #FFFFFF;
+            margin-top: 60px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .marquee-content {
+            position: absolute;
+            width: 100%;
+            animation: scroll-left-right 10s linear infinite;
+        }
+
+        @keyframes scroll-left-right {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
         .login-form {
+            margin-left:380px;
+            margin-top: 40px;
             background: rgba(64, 64, 64, 0.15);
             border: 3px solid rgba(255, 255, 255, 0.3);
             padding: 30px;
@@ -33,7 +59,7 @@
             backdrop-filter: blur(25px);
             text-align: center;
             color: white;
-            max-width: 500px;
+            max-width: 600px;
             box-shadow: 0px 0px 20px 10px rgba(0, 0, 0, 0.15);
         }
 
@@ -173,35 +199,39 @@
         .autocomplete-item:hover {
             background-color: #e9ecef;
             color: #333;
-            
         }
 
 </style>
 
 </head>
 <body>
+
+    <div class="subject">
+        <div class="marquee-content">
+            <h1>Artificial Intelligence Concepts</h1>
+        </div>
+    </div>
+
     
     <form id="searchForm" novalidate class="login-form">
         <h1 class="login-title">Autocomplete Typo Corrector</h1>
 
         <div class="input-box">
-            <i class='bx bxs-user'></i>
+            <i class='bx bxs-keyboard'></i>
             <input type="text" id="myInput" name="q" class="form-control" placeholder="Search..." required autocomplete="off">
         </div>
 
         <div id="autocomplete" class="autocomplete-items d-none"></div>
 
-        <!--     <button class="login-btn">Correct Word</button> -->
-
         <br>
         <p class="register">
-            @GROUP1 - Autocomplete and Typo Corrector
+            @GROUP 1 - Autocomplete and Typo Corrector
         </p>
     </form>
 
 </body>
 <script>
-    const dataFileUrl = "{{ asset('data/collection_datas.txt') }}";
+    const collection_corpus = "{{ asset('data/collection_datas.txt') }}";
 
     function levenshtein(a, b) {
         const matrix = Array.from({ length: b.length + 1 }, (_, i) => [i]);
@@ -228,7 +258,7 @@
         const autocomplete = document.getElementById('autocomplete');
         let data = [];
 
-        fetch(dataFileUrl)
+        fetch(collection_corpus)
             .then(response => response.text())
             .then(text => {
                 data = text.split('\n').map(line => line.trim().toLowerCase()).filter(Boolean);
