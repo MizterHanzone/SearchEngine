@@ -218,7 +218,7 @@
 
         <div class="input-box">
             <i class='bx bxs-keyboard'></i>
-            <input type="text" id="myInput" name="q" class="form-control" placeholder="Search..." required autocomplete="off">
+            <input type="text" id="myInput" name="q" class="form-control" placeholder="Search..." re.quired autocomplete="off">
         </div>
 
         <div id="autocomplete" class="autocomplete-items d-none"></div>
@@ -300,19 +300,6 @@
             if (data.includes(val)) {
                 input.classList.remove('is-invalid');
                 input.classList.add('is-valid');
-            } else {
-                input.classList.remove('is-valid');
-                input.classList.add('is-invalid');
-            }
-        });
-
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            const val = input.value.trim().toLowerCase();
-            if (data.includes(val)) {
-                input.classList.remove('is-invalid');
-                input.classList.add('is-valid');
-                // alert("Form submitted: " + input.value);
             } else {
                 input.classList.remove('is-valid');
                 input.classList.add('is-invalid');
