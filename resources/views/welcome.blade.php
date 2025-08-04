@@ -229,7 +229,7 @@
 
         <div class="input-box" id="inputBox">
             <i class='bx bxs-keyboard'></i>
-            <input type="text" id="myInput" name="q" class="form-control" placeholder="Search..." required autocomplete>
+            <input type="text" id="myInput" name="q" class="form-control" placeholder="Search..." required autocomplete="off">
         </div>
 
         <div id="autocomplete" class="d-none"></div>
