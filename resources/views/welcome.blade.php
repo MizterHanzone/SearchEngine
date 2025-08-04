@@ -50,7 +50,7 @@
         }
 
         .login-form {
-            margin-left:380px;
+            margin-left:444px;
             margin-top: 40px;
             background: rgba(64, 64, 64, 0.15);
             border: 3px solid rgba(255, 255, 255, 0.3);
@@ -218,10 +218,10 @@
 
         <div class="input-box">
             <i class='bx bxs-keyboard'></i>
-            <input type="text" id="myInput" name="q" class="form-control" placeholder="Search..." re.quired autocomplete="off">
+            <input type="text" id="myInput" name="q" class="form-control" placeholder="Search..." required autocomplete="off">
         </div>
 
-        <div id="autocomplete" class="autocomplete-items d-none"></div>
+        <div id="autocomplete"autocomplete-items d-none"></div>
 
         <br>
         <p class="register">
@@ -251,7 +251,7 @@
         }
         return matrix[b.length][a.length];
     }
-
+    
     document.addEventListener('DOMContentLoaded', () => {
         const input = document.getElementById('myInput');
         const form = document.getElementById('searchForm');
