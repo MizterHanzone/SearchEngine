@@ -201,6 +201,18 @@
             color: #333;
         }
 
+        .is-valid {
+            border: 2px solid #28a745 !important;         
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .is-invalid {
+            border: 2px solid #dc3545 !important;    
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
 </style>
 
 </head>
@@ -212,20 +224,19 @@
         </div>
     </div>
 
-    
     <form id="searchForm" novalidate class="login-form">
         <h1 class="login-title">Autocomplete Typo Corrector</h1>
 
-        <div class="input-box">
+        <div class="input-box" id="inputBox">
             <i class='bx bxs-keyboard'></i>
             <input type="text" id="myInput" name="q" class="form-control" placeholder="Search..." required autocomplete>
         </div>
 
-        <div id="autocomplete"autocomplete-items d-none"></div>
+        <div id="autocomplete" class="d-none"></div>
 
         <br>
         <p class="register">
-            @GROUP 1 - Autocomplete and Typo Corrector
+            @GROUP 2 - Autocomplete and Typo Corrector
         </p>
     </form>
 
@@ -265,18 +276,20 @@
             });
 
         input.addEventListener('input', function () {
-            const val = this.value.trim().toLowerCase();
+            const inputValue = this.value.trim().toLowerCase();
+            const words = inputValue.split(/\s+/); // split by whitespace
+            const lastWord = words[words.length - 1]; // get the last word
             autocomplete.innerHTML = '';
 
-            if (val === '') {
+            if (lastWord === '') {
                 autocomplete.classList.add('d-none');
                 input.classList.remove('is-valid', 'is-invalid');
                 return;
             }
 
             const suggestions = data.filter(item => {
-                const distance = levenshtein(val, item);
-                return item.includes(val) || distance <= 2;
+                const distance = levenshtein(lastWord, item);
+                return item.includes(lastWord) || distance <= 2;
             });
 
             if (suggestions.length > 0) {
@@ -284,20 +297,24 @@
                     const div = document.createElement('div');
                     div.classList.add('autocomplete-item');
                     div.textContent = item;
+
                     div.onclick = () => {
-                        input.value = item;
+                        words[words.length - 1] = item;
+                        input.value = words.join(' ') + ' ';
                         input.classList.remove('is-invalid');
                         input.classList.add('is-valid');
                         autocomplete.classList.add('d-none');
                     };
+
                     autocomplete.appendChild(div);
                 });
+
                 autocomplete.classList.remove('d-none');
             } else {
                 autocomplete.classList.add('d-none');
             }
 
-            if (data.includes(val)) {
+            if (data.includes(lastWord)) {
                 input.classList.remove('is-invalid');
                 input.classList.add('is-valid');
             } else {
@@ -306,11 +323,12 @@
             }
         });
 
-        document.addEventListener('click', function (e) {
-            if (!autocomplete.contains(e.target) && e.target !== input) {
-                autocomplete.classList.add('d-none');
-            }
-        });
+
+        // document.addEventListener('click', function (e) {
+        //     if (!autocomplete.contains(e.target) && e.target !== input) {
+        //         autocomplete.classList.add('d-none');    
+        //     }
+        // });
     });
 </script>
 </html>
