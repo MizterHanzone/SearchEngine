@@ -6,7 +6,8 @@
     <title>Autocomplete and Typo Corrector</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+    
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
         * {
             margin: 0;
@@ -242,93 +243,151 @@
 
 </body>
 <script>
-    const collection_corpus = "{{ asset('data/collection_datas.txt') }}";
+class TextHelper {
+    static levenshtein(a, b) {
+        const dp = Array.from({ length: b.length + 1 }, () => []);
+        for (let i = 0; i <= b.length; i++) dp[i][0] = i;
+        for (let j = 0; j <= a.length; j++) dp[0][j] = j;
 
-    function levenshtein(a, b) {
-        const matrix = Array.from({ length: b.length + 1 }, (_, i) => [i]);
-        for (let j = 1; j <= a.length; j++) matrix[0][j] = j;
         for (let i = 1; i <= b.length; i++) {
             for (let j = 1; j <= a.length; j++) {
                 if (b[i - 1] === a[j - 1]) {
-                    matrix[i][j] = matrix[i - 1][j - 1];
+                    dp[i][j] = dp[i - 1][j - 1];
                 } else {
-                    matrix[i][j] = Math.min(
-                        matrix[i - 1][j] + 1,
-                        matrix[i][j - 1] + 1,
-                        matrix[i - 1][j - 1] + 1
+                    dp[i][j] = Math.min(
+                        dp[i - 1][j] + 1,
+                        dp[i][j - 1] + 1,
+                        dp[i - 1][j - 1] + 1
                     );
                 }
             }
         }
-        return matrix[b.length][a.length];
+        return dp[b.length][a.length];
     }
-    
-    document.addEventListener('DOMContentLoaded', () => {
-        const input = document.getElementById('myInput');
-        const form = document.getElementById('searchForm');
-        const autocomplete = document.getElementById('autocomplete');
-        let data = [];
 
-        fetch(collection_corpus)
-            .then(response => response.text())
-            .then(text => {
-                data = text.split('\n').map(line => line.trim().toLowerCase()).filter(Boolean);
-            });
-
-        input.addEventListener('input', function () {
-            const inputValue = this.value.trim().toLowerCase();
-            const words = inputValue.split(/\s+/); // split by whitespace
-            const lastWord = words[words.length - 1]; // get the last word
-            autocomplete.innerHTML = '';
-
-            if (lastWord === '') {
-                autocomplete.classList.add('d-none');
-                input.classList.remove('is-valid', 'is-invalid');
-                return;
+    static ngramSimilarity(a, b, n = 2) {
+        if (!a.length || !b.length) return 0;
+        const ngrams = str => {
+            const grams = [];
+            for (let i = 0; i < str.length - n + 1; i++) {
+                grams.push(str.slice(i, i + n));
             }
+            return grams;
+        };
+        const aGrams = ngrams(a);
+        const bGrams = ngrams(b);
+        const intersection = aGrams.filter(g => bGrams.includes(g)).length;
+        return (2 * intersection) / (aGrams.length + bGrams.length);
+    }
+}
 
-            const suggestions = data.filter(item => {
-                const distance = levenshtein(lastWord, item);
-                return item.includes(lastWord) || distance <= 2;
-            });
+class AutocompleteCorrector {
+    constructor(dataset) {
+        this.dataset = dataset.map(w => w.toLowerCase());
+        this.input = document.getElementById("myInput");
+        this.autocompleteBox = document.getElementById("autocomplete");
+        this.bindEvents();
+    }
 
-            if (suggestions.length > 0) {
-                suggestions.forEach(item => {
-                    const div = document.createElement('div');
-                    div.classList.add('autocomplete-item');
-                    div.textContent = item;
-
-                    div.onclick = () => {
-                        words[words.length - 1] = item;
-                        input.value = words.join(' ') + ' ';
-                        input.classList.remove('is-invalid');
-                        input.classList.add('is-valid');
-                        autocomplete.classList.add('d-none');
-                    };
-
-                    autocomplete.appendChild(div);
-                });
-
-                autocomplete.classList.remove('d-none');
-            } else {
-                autocomplete.classList.add('d-none');
-            }
-
-            if (data.includes(lastWord)) {
-                input.classList.remove('is-invalid');
-                input.classList.add('is-valid');
-            } else {
-                input.classList.remove('is-valid');
-                input.classList.add('is-invalid');
+    bindEvents() {
+        this.input.addEventListener("input", () => this.showSuggestions());
+        this.input.addEventListener("keydown", e => {
+            if (e.key === "Tab" || e.key === "Enter") {
+                e.preventDefault();
+                this.applyBestSuggestion();
             }
         });
+    }
 
+    getBestMatch(word) {
+        let best = { term: word, score: Infinity, similarity: 0 };
+        for (let term of this.dataset) {
+            const distance = TextHelper.levenshtein(word, term);
+            const similarity = TextHelper.ngramSimilarity(word, term);
+            if (
+                similarity > best.similarity ||
+                (similarity === best.similarity && distance < best.score)
+            ) {
+                best = { term, score: distance, similarity };
+            }
+        }
+        return best.term;
+    }
 
-        // document.addEventListener('click', function (e) {
-        //     if (!autocomplete.contains(e.target) && e.target !== input) {
-        //         autocomplete.classList.add('d-none');    
-        //     }
-        // });
-    });
+    showSuggestions() {
+        const value = this.input.value.trim().toLowerCase();
+        const words = value.split(/\s+/);
+        const lastWord = words[words.length - 1];
+        this.autocompleteBox.innerHTML = "";
+
+        if (!lastWord) {
+            this.autocompleteBox.style.display = "none";
+            return;
+        }
+
+        const suggestions = this.dataset
+            .map(term => ({
+                term,
+                dist: TextHelper.levenshtein(lastWord, term),
+                sim: TextHelper.ngramSimilarity(lastWord, term)
+            }))
+            .filter(s => s.term.includes(lastWord) || s.dist <= 2 || s.sim >= 0.5)
+            .sort((a, b) => b.sim - a.sim || a.dist - b.dist)
+            .slice(0, 5);
+
+        if (suggestions.length) {
+            suggestions.forEach(s => {
+                const div = document.createElement("div");
+                div.classList.add("autocomplete-item");
+                div.textContent = s.term;
+                div.onclick = () => {
+                    words[words.length - 1] = s.term;
+                    this.input.value = words.join(" ") + " ";
+                    this.autocompleteBox.style.display = "none";
+                    this.validateWord(s.term);
+                };
+                this.autocompleteBox.appendChild(div);
+            });
+            this.autocompleteBox.style.display = "block";
+        } else {
+            this.autocompleteBox.style.display = "none";
+        }
+
+        this.validateWord(lastWord);
+    }
+
+    applyBestSuggestion() {
+        const value = this.input.value.trim().toLowerCase();
+        const words = value.split(/\s+/);
+        const lastWord = words[words.length - 1];
+        const best = this.getBestMatch(lastWord);
+        words[words.length - 1] = best;
+        this.input.value = words.join(" ") + " ";
+        this.autocompleteBox.style.display = "none";
+        this.validateWord(best);
+    }
+
+    validateWord(word) {
+        if (this.dataset.includes(word.toLowerCase())) {
+            this.input.classList.add("is-valid");
+            this.input.classList.remove("is-invalid");
+        } else {
+            this.input.classList.remove("is-valid");
+            this.input.classList.add("is-invalid");
+        }
+    }
+}
+
+const collection_corpus = "{{ asset('data/collection_datas.txt') }}";
+
+fetch(collection_corpus)
+    .then(response => response.text())
+    .then(text => {
+        // Assuming words are separated by spaces or newlines
+        const dataset = text.split(/\s+/).filter(Boolean);
+        new AutocompleteCorrector(dataset);
+    })
+    .catch(err => console.error("Error loading dataset:", err));
 </script>
+
 </html>
